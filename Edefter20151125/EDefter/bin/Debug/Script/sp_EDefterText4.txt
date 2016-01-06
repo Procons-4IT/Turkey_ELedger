@@ -1,0 +1,683 @@
+CREATE PROCEDURE sp_EDefterText4 (IN DocEntry_I integer,
+	 IN CompanyName_I nvarchar(100)) LANGUAGE SQLSCRIPT AS DocEntry integer 
+;
+CompanyName nVarChar(200) 
+;
+Satir nvarchar(5000) 
+;
+intSatir integer 
+;
+AyAdi nvarchar(50) 
+;
+bastar date 
+;
+bittar date 
+;
+entrynumber nvarchar(50) 
+;
+documentreference nvarchar(50) 
+;
+entryref nvarchar(50) 
+;
+enteredby nvarchar(50) 
+;
+entereddate date 
+;
+linenumber integer 
+;
+linenumbercounter integer 
+;
+documenttype nvarchar(50) 
+;
+doctypedesc nvarchar(100) 
+;
+documentnumber nvarchar(30) 
+;
+documentdate date 
+;
+paymentmethod nvarchar(100) 
+;
+accmainid nvarchar(50) 
+;
+accmainiddesc nvarchar(100) 
+;
+accsubdesc nvarchar(200) 
+;
+accsubid nvarchar(50) 
+;
+debitcreditcode char(1) 
+;
+postingdate nvarchar(8) 
+;
+detailcomment nvarchar(250) 
+;
+entrycomment nvarchar(200) 
+;
+amount decimal(19,
+	 2) 
+;
+totaldebit decimal(19,
+	 2) 
+;
+totalcredit decimal(19,
+	 2) 
+;
+Satir_Madde_No integer 
+;
+intsatirMaddeNo integer 
+;
+strfisnoYeni nvarchar(50) 
+;
+strfisno nvarchar(50) 
+;
+LineId integer 
+;
+yevmiyemaddeno nvarchar(10) 
+;
+yeniyevmiyeno integer 
+;
+fisno nvarchar(20) 
+;
+ArtanSatirNo nvarchar(5) 
+;
+dokno nvarchar(30) 
+;
+bittar2 char(2) 
+;
+bastar2 char(2) 
+;
+doktarih nvarchar(10) 
+;
+ilkfisno nvarchar(50) 
+;
+ 
+BEGIN create local temporary column table #TempTable (ID integer,
+	 SatirDeger nvarchar(5000)) 
+;
+DocEntry := :DocEntry_I 
+;
+CompanyName := :CompanyName_I 
+;
+ilkfisno := '' 
+;
+intSatir := 0 
+;
+yeniyevmiyeno := 0 
+;
+ 
+if (:DocEntry > 0) 
+THEN Declare CURSOR MyCursor FOR SELECT
+	 "U_startdate",
+	 "U_enddate",
+	 "U_entryref",
+	 "U_linenumber",
+	 "U_linenumbercounter",
+	 "U_accmainid",
+	 REPLACE(REPLACE("U_accmainiddesc",
+	 '" ',
+	 ''),
+	 '''',
+	 '') As "U_accmainiddesc",
+	 "U_accsubid",
+	 REPLACE(REPLACE("U_accsubdesc",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_accsubdesc",
+	 IFNULL("U_amount",
+	 0) As "U_amount",
+	 "U_totaldebit",
+	 "U_totalcredit",
+	 "U_debitcreditcode",
+	 "U_postingdate",
+	 REPLACE(REPLACE("U_documenttype",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_documenttype",
+	 REPLACE(REPLACE("U_doctypedesc",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_doctypedesc",
+	 REPLACE(REPLACE("U_documentnumber",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_documentnumber",
+	 "U_documentreference",
+	 "U_documentdate",
+	 REPLACE(REPLACE("U_paymentmethod",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_paymentmethod",
+	 REPLACE(REPLACE("U_detailcomment",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_detailcomment",
+	 "U_entereddate",
+	 "U_entrynumber",
+	 REPLACE(REPLACE("U_entrycomment",
+	 '"',
+	 ''),
+	 '''',
+	 '') As "U_entrycomment" 
+FROM "@ELRAPVB" 
+WHERE "DocEntry" = 1 
+AND IFNULL("U_amount",
+	 0) > 0 
+;
+--[Note:Modifier] SAP HANA does not support table hints for query optimizer in TSQL
+ FOR cur_row as MyCursor DO intSatir := :intSatir + 1 
+;
+ 
+IF :intSatir = 1 
+THEN AyAdi := '' 
+;
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 1 
+THEN AyAdi := 'January' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP 
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 2 
+THEN AyAdi := 'February' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 3 
+THEN AyAdi := 'March' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 4 
+THEN AyAdi := 'April' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 5 
+THEN AyAdi := 'May' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 6 
+THEN AyAdi := 'June' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 7 
+THEN AyAdi := 'July' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 8 
+THEN AyAdi := 'Agust' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 9 
+THEN AyAdi := 'September' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 10 
+THEN AyAdi := 'October' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 11 
+THEN AyAdi := 'November' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF CAST(MONTH(cur_row."U_startdate") AS nvarchar) = 12 
+THEN AyAdi := 'December' 
+;
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(CAST(DAYOFMONTH(cur_row."U_enddate") AS nvarchar)) = 1 
+THEN bittar2 := '0' || CAST(DAYOFMONTH(cur_row."U_enddate") AS nvarchar) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support 
+ 
+IF LENGTH(CAST(DAYOFMONTH(cur_row."U_enddate") AS nvarchar)) = 2 
+THEN bittar2 := CAST(DAYOFMONTH(cur_row."U_enddate") AS nvarchar) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(CAST(DAYOFMONTH(cur_row."U_startdate") AS nvarchar)) = 1 
+THEN bastar2 := '0' || CAST(DAYOFMONTH(cur_row."U_startdate") AS nvarchar) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(CAST(DAYOFMONTH(cur_row."U_startdate") AS nvarchar)) = 2 
+THEN bastar2 := CAST(DAYOFMONTH(cur_row."U_startdate") AS nvarchar) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ Satir := 'HDR: "JOURNAL" "' || CAST(YEAR(cur_row."U_startdate") AS nvarchar) || '-01-01" "' || CAST(YEAR(cur_row."U_startdate") AS nvarchar) || '
+-12-31" "' || CAST(cur_row."U_startdate" AS varchar(10)) || '" "' || CAST(cur_row."U_enddate" AS varchar(10)) || '" "YEV' || CAST(cur_row."U_startdate" AS varchar(8)) || ' ' || :bittar2 || '" "JOURNAL kept by ' || :CompanyName || ' for the period between ' || :bastar2 || '
+ ' || :AyAdi || ' ' || CAST(YEAR(cur_row."U_startdate") AS nvarchar) || ' and ' || :bittar2 || ' ' || :AyAdi || ' ' || CAST(YEAR(cur_row."U_enddate") AS nvarchar) || ' "' 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ INSERT 
+INTO #TempTable (SELECT
+	 :intSatir,
+	 :Satir 
+	FROM DUMMY) 
+;
+--[Note:Modifier] Use FROM DUMMY if there is no FROM clause in the SELECT statement
+ 
+END 
+IF 
+;
+ 
+IF :yeniyevmiyeno <> cur_row."U_linenumbercounter" 
+THEN intSatir := :intSatir + 1 
+;
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 1 
+THEN yevmiyemaddeno := '000000000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 2 
+THEN yevmiyemaddeno := '00000000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 3 
+THEN yevmiyemaddeno := '0000000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 4 
+THEN yevmiyemaddeno := '000000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 5 
+THEN yevmiyemaddeno := '00000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 6 
+THEN yevmiyemaddeno := '0000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 7 
+THEN yevmiyemaddeno := '000' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 8 
+THEN yevmiyemaddeno := '00' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar)))) = 9 
+THEN yevmiyemaddeno := '0' || LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+Else yevmiyemaddeno := LTRIM(RTRIM(CAST(cur_row."U_linenumbercounter" AS nvarchar))) 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ fisno := '' 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 1 
+THEN fisno := '000000' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 2 
+THEN fisno := '00000' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 3 
+THEN fisno := '0000' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 4 
+THEN fisno := '000' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 5 
+THEN fisno := '00' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) = 6 
+THEN fisno := '0' || cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ 
+IF LTRIM(RTRIM(cur_row."U_entryref")) >= 7 
+THEN fisno := cur_row."U_entryref" 
+;
+ 
+END 
+IF 
+;
+ Satir := 'Y:"' || :yevmiyemaddeno || '" "' || CAST(IFNULL(cur_row."U_totaldebit",
+	0) AS nvarchar) || '" "' || CAST(IFNULL(cur_row."U_totalcredit",
+	0) AS nvarchar) || '" "' || CAST(cur_row."U_entereddate" AS varchar(10)) || '" "' || IFNULL(cur_row."U_entryref" ,
+	'') || '" "' || IFNULL(cur_row."U_entrycomment",
+	'') || '"' 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ INSERT 
+INTO #TempTable (SELECT
+	 :intSatir,
+	 :Satir 
+	FROM DUMMY) 
+;
+ yeniyevmiyeno := cur_row."U_linenumbercounter" 
+;
+ 
+END 
+IF 
+;
+ intSatir := :intSatir + 1 
+;
+ArtanSatirNo := '' 
+;
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar)))) = 1 
+THEN ArtanSatirNo := '00' || LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar)))) = 2 
+THEN ArtanSatirNo := '0' || LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar)))) = 3 
+THEN ArtanSatirNo := LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+Else ArtanSatirNo := LTRIM(RTRIM(CAST(cur_row."U_linenumber" AS nvarchar))) 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF :ilkfisno <> cur_row."U_entryref" 
+THEN ilkfisno := cur_row."U_entryref" 
+;
+dokno := '' 
+;
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 1 
+THEN dokno := '000000' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 2 
+THEN dokno := '00000' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 3 
+THEN dokno := '0000' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 4 
+THEN dokno := '000' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 5 
+THEN dokno := '00' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) = 6 
+THEN dokno := '0' || LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF LENGTH(LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar)))) >= 7 
+THEN dokno := LTRIM(RTRIM(CAST(cur_row."U_documentnumber" AS nvarchar))) 
+;
+ --[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+END 
+IF 
+;
+ doktarih := CAST(cur_row."U_documentdate" AS nvarchar(10)) 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ 
+IF :doktarih = '1900-01-01' 
+THEN doktarih := '' 
+;
+ 
+END 
+IF 
+;
+ Satir := 'YD:"' || LTRIM(RTRIM(IFNULL(cur_row."U_accmainid",
+	''))) || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_accmainiddesc",
+	 ''))) || '" "' || :ArtanSatirNo || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_accsubid",
+	 ''))) || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_accsubdesc",
+	 ''))) || '" "' || LTRIM(RTRIM(CAST(IFNULL(cur_row."U_amount",
+	 0) AS nvarchar))) || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_debitcreditcode",
+	 ''))) || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_paymentmethod",
+	 ''))) || '" "' || LTRIM(RTRIM(IFNULL(cur_row."U_documenttype",
+	 ''))) || '" "' || LTRIM(RTRIM( IFNULL(cur_row."U_doctypedesc",
+	 ''))) || '" "' || LTRIM(RTRIM(IFNULL(:dokno,
+	 ''))) || '" "' || LTRIM(RTRIM(IFNULL(:doktarih,
+	 '')) ) || '"' 
+;
+--[Note:Modifier] SAP HANA does not support function CONVERT; use the CAST function or implicit casting functions
+ INSERT 
+INTO #TempTable (SELECT
+	 :intSatir,
+	 :Satir 
+	FROM DUMMY) 
+;
+ 
+END FOR 
+;
+ SELECT
+	 SatirDeger 
+FROM #TempTable 
+ORDER BY ID 
+;
+ 
+End 
+if 
+;
+ 
+Drop Table #TempTable  ;
+ 
+END 
+;--2,'trtr'

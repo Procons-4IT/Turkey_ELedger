@@ -1,0 +1,57 @@
+CREATE PROCEDURE sp_EDefterExcel3(IN DocEntry int) LANGUAGE SQLSCRIPT AS 
+begin SELECT
+	 "U_detailref",
+	 "U_entryref",
+	 "U_linenumber",
+	 "U_linenumbercounter",
+	 "U_accmainid",
+	 "U_accmainiddesc",
+	 "U_accsubid",
+	 "U_accsubdesc",
+	 "U_amount",
+	 "U_debitcreditcode",
+	 CAST("U_postingdate" AS varchar(10)) AS "U_postingdate",
+	 CASE WHEN ("U_documenttype" = '' 
+	OR "U_documenttype" IS NULL) 
+THEN 'NULL' 
+ELSE "U_documenttype" 
+END AS "U_documenttype",
+	 CASE WHEN ("U_documenttype" = '' 
+	OR "U_documenttype" IS NULL) 
+THEN 'NULL' 
+ELSE CASE WHEN ("U_doctypedesc" = '' 
+	OR "U_doctypedesc" IS NULL) 
+THEN 'NULL' 
+ELSE "U_doctypedesc" 
+End 
+END AS "U_doctypedesc",
+	 CASE WHEN ("U_documenttype" = '' 
+	OR "U_documenttype" IS NULL) 
+THEN 'NULL' 
+ELSE CAST("U_documentnumber" AS nvarchar) 
+END AS "U_documentnumber",
+	 "U_documentreference",
+	 "U_entrynumbercounter",
+	 CASE WHEN ("U_documenttype" = '' 
+	OR "U_documenttype" IS NULL) 
+THEN NULL 
+ELSE CAST("U_documentdate" AS varchar(10)) 
+END AS "U_documentdate",
+	 "U_paymentmethod",
+	 IFNULL("U_detailcomment",
+	 '') AS "U_detailcomment",
+	 "U_erpno",
+	 "U_divisionno",
+	 "U_enteredby",
+	 CAST("U_entereddate" AS varchar(10)) AS "U_entereddate",
+	 "U_entrynumber",
+	 IFNULL("U_entrycomment",
+	 '') AS "U_entrycomment" 
+FROM "@ELRAPVI" 
+WHERE "DocEntry" = :DocEntry 
+AND "U_amount" > 0 
+ORDER BY "U_detailref"
+;
+
+end
+;

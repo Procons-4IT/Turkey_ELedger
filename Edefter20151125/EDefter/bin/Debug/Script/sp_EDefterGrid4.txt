@@ -1,0 +1,3037 @@
+ create PROCEDURE sp_EDefterGrid4 (
+ in B1_I timestamp,
+	 in B2_I timestamp,
+	 in B3_I timestamp,
+	 in B4_I timestamp,
+	 in DocEntry_I integer,
+	 in Yevmiye_Madde_Numarasi_I integer,
+	 in Satir_Madde_No_I integer ) LANGUAGE SQLSCRIPT AS B1 timestamp 
+;	 
+B2 timestamp
+;	 
+B3 timestamp 
+;	 
+B4 timestamp 
+;
+DocEntry integer 
+;
+Yevmiye_Madde_Numarasi integer 
+;
+Satir_Madde_No integer 
+;
+Tarih smallint 
+;
+StartDate timestamp 
+;
+EndDate timestamp 
+;
+SDate nvarchar(8) 
+;
+EDate nvarchar(8) 
+;
+entryref nvarchar(50) 
+;
+enteredby nvarchar(50) 
+;
+entereddate nvarchar(8) 
+;
+linenumber integer 
+;
+linenumbercounter integer 
+;
+SatirNo integer 
+;
+documenttype nvarchar(50) 
+;
+doctypedesc nvarchar(100) 
+;
+documentnumber nvarchar(30) 
+;
+documentdate nvarchar(10) 
+;
+paymentmethod nvarchar(100) 
+;
+accmainid nvarchar(50) 
+;
+accmainiddesc nvarchar(100) 
+;
+accsubdesc nvarchar(200) 
+;
+accsubid nvarchar(50) 
+;
+debitcreditcode char(1) 
+;
+postingdate nvarchar(8) 
+;
+detailcomment nvarchar(250) 
+;
+entrycomment nvarchar(200) 
+;
+amount decimal(19,
+	 6) 
+;
+totaldebit decimal(19,
+	 6) 
+;
+totalcredit decimal(19,
+	 6) 
+;
+intsatirMaddeNo integer 
+;
+strfisnoYeni nvarchar(50) 
+;
+strfisno nvarchar(50) 
+;
+LineId integer 
+;
+ObjectId smallint 
+;
+bastar date 
+;
+bittar date 
+;	 
+ 
+begin 
+
+B1 := :B1_I 
+;
+B2 := :B2_I 
+;
+B3 := :B3_I 
+;
+B4 := :B4_I 
+;
+ DocEntry := :DocEntry_I 
+;
+Yevmiye_Madde_Numarasi := :Yevmiye_Madde_Numarasi_I 
+;
+Satir_Madde_No := :Satir_Madde_No_I 
+;
+ 
+IF:B1 = '' 
+THEN B1 := '1900-01-01' 
+;
+ 
+END 
+IF 
+;
+ 
+IF :B1 = '' 
+THEN B1 := '1900-01-01' 
+;
+ 
+END 
+IF 
+;
+ 
+IF :B2 = '' 
+THEN B2 := '2100-01-01' 
+;
+ 
+END 
+IF 
+;
+ 
+IF :B3 = '' 
+THEN B3 := '1900-01-01' 
+;
+ 
+END 
+IF 
+;
+ 
+IF :B4 = '' 
+THEN B4 := '2100-01-01' 
+;
+ 
+END 
+IF 
+;
+ 
+IF :B1 <> '1900-01-01' 
+THEN StartDate := :B1 
+;
+ EndDate := :B2 
+;
+ Tarih := 1 
+;
+ 
+ELSE StartDate := :B3 
+;
+ EndDate := :B4 
+;
+ Tarih := 2 
+;
+ 
+END 
+IF 
+;
+ DELETE 
+FROM "@ELRAPVB" 
+WHERE "DocEntry" = :DocEntry 
+;
+ 
+IF :Yevmiye_Madde_Numarasi = 0 
+THEN SELECT
+	 IFNULL(MAX("U_linenumbercounter"),
+	 0) + 1 
+INTO Yevmiye_Madde_Numarasi 
+FROM "@ELRAPVB" 
+;
+
+ 
+END 
+IF 
+;
+ 
+IF :Satir_Madde_No = 0 
+THEN SELECT
+	 IFNULL(MAX("U_linenumber"),
+	 0) + 1 
+INTO Satir_Madde_No 
+FROM "@ELRAPVB" 
+;
+
+ 
+END 
+IF 
+;
+intsatirMaddeNo := :Satir_Madde_No - 1 
+;
+Yevmiye_Madde_Numarasi := :Yevmiye_Madde_Numarasi - 1 
+;
+strfisnoYeni := '' 
+;
+strfisno := '' 
+;
+LineId := 0 
+;
+--SELECT "Series" INTO ObjectId FROM NNM1;
+
+ 
+IF (:Tarih = 1) THEN 
+
+Declare CURSOR MyCursor FOR
+ SELECT
+	 "startdate",
+	 "enddate",
+	 "enteredby",
+	 "entereddate",
+	 "entryref",
+	 "linenumber",
+	 "linenumbercounter",
+	 "SatirNo",
+	 "totaldebit",
+	 "totalcredit",
+	 IFNULL("documenttype",
+	 '') AS "documenttype",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN '' 
+ELSE "doctypedesc" 
+END AS "doctypedesc",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN '' 
+ELSE "documentnumber" 
+END AS "documentnumber",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN NULL 
+ELSE CAST("documentdate" AS nvarchar(10)) 
+END AS "documentdate",
+	 "paymentmethod",
+	 "accmainid",
+	 "accmainiddesc",
+	 "accsubdesc",
+	 "accsubid",
+	 "amount",
+	 "debitcreditcode",
+	 "postingdate",
+	 "detailcomment",
+	 "entrycomment" 
+FROM (
+ SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 CASE WHEN (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast( O."TransId" As NVARCHAR) 
+	ELSE Cast( O."TransId" As NVARCHAR) 
+	END as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'other' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	THEN 'check' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN 'other' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 1 
+	THEN 'voucher' 
+	ELSE '' 
+	END as "documenttype",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'dekont' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") >= 2 
+	THEN 'Çek bordrosu' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId")>1 
+	THEN 'Senet Bordrosu' 
+	ELSE '' 
+	END as "doctypedesc",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	AND J."Ref3Line" IS NOT NULL 
+	AND LTRIM(RTRIM(Cast(J."Ref3Line" As nvarchar)))<>'' 
+	THEN Cast(J."Ref3Line" As nvarchar) WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast(O."TransId" as nvarchar) WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	THEN Cast(R."BoeNum" As nvarchar) 
+	ELSE Cast(J."TransId" As nvarchar) 
+	END as "documentnumber",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	THEN 'çek' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'banka' WHEN ((R."CreditSum" IS NOT NULL 
+			AND R."CreditSum" >0) 
+		OR (R."CredSumFC" IS NOT NULL 
+			AND R."CredSumFC">0)) 
+	THEN 'kredi karti' WHEN ((R."CashSum" IS NOT NULL 
+			AND R."CashSum" >0) 
+		OR (R."CashSumFC" IS NOT NULL 
+			AND R."CashSumFC">0)) 
+	THEN 'nakit' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	THEN 'Senet' 
+	ELSE '' 
+	END as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORCT R,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND R."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 24 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) 
+	AND O."StornoToTr" IS NULL AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	UNION SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 CASE WHEN (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast( O."TransId" As NVARCHAR) 
+	ELSE Cast( O."TransId" As NVARCHAR) 
+	END as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'other' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	THEN 'check' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN 'other' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 1 
+	THEN 'voucher' 
+	ELSE '' 
+	END as "documenttype",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'dekont' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") >= 2 
+	THEN 'Çek bordrosu' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId")>1 
+	THEN 'Senet Bordrosu' 
+	ELSE '' 
+	END as "doctypedesc",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	AND J."Ref3Line" IS NOT NULL 
+	AND LTRIM(RTRIM(Cast(J."Ref3Line" As nvarchar)))<>'' 
+	THEN (SELECT
+	 CAST(K."Ref3Line" As nvarchar) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId" 
+		AND K."Line_ID" = 0) WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast(O."TransId" as nvarchar) WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	THEN Cast(V."BoeNum" As nvarchar) 
+	ELSE Cast(J."TransId" As nvarchar) 
+	END as "documentnumber",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	THEN 'çek' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'banka' WHEN ((V."CreditSum" IS NOT NULL 
+			AND V."CreditSum" >0) 
+		OR (V."CredSumFC" IS NOT NULL 
+			AND V."CredSumFC">0)) 
+	THEN 'kredi karti' WHEN ((V."CashSum" IS NOT NULL 
+			AND V."CashSum" >0) 
+		OR (V."CashSumFC" IS NOT NULL 
+			AND V."CashSumFC">0)) 
+	THEN 'nakit' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	THEN 'Senet' 
+	ELSE '' 
+	END as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OVPM V,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND V."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 46 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) 
+	AND O."StornoToTr" IS NULL AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	UNION SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 13) 
+	END as "documenttype",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 13) 
+	END as "doctypedesc",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' WHEN N."FolioNum" IS NOT NULL 
+	AND N."FolioNum">0 
+	THEN CAST(N."FolioNum" As nvarchar) WHEN N."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(N."U_EFATNO"))<>'' 
+	THEN CAST(N."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN N."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OINV N,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND N."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 13 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	UNION SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 203) 
+	END as "documenttype",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 203) 
+	END as "doctypedesc",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' WHEN P."FolioNum" IS NOT NULL 
+	AND P."FolioNum">0 
+	THEN CAST(P."FolioNum" As nvarchar) WHEN P."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(P."U_EFATNO"))<>'' 
+	THEN CAST(P."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN P."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ODPI P,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND P."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 203 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 14) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 14) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORIN I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 14 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 204) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 204) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ODPO I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 204 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 18) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 18) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OPCH I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 18 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 19) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 19) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORPC I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 19 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+	 U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN O."Indicator" = 'D1' 
+	THEN 'other' WHEN O."Indicator" = 'D2' 
+	THEN 'other' WHEN O."Indicator" = 'D3' 
+	THEN 'other' WHEN O."Indicator" = 'D4' 
+	THEN 'other' WHEN O."Indicator" = 'D5' 
+	THEN 'shipment' WHEN O."Indicator" = 'D6' 
+	THEN 'receipt' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = O."TransType") 
+	END as "documenttype",
+	 CASE WHEN O."Indicator" = 'D1' 
+	THEN 'masraf formu' WHEN O."Indicator" = 'D2' 
+	THEN 'Z Raporu' WHEN O."Indicator" = 'D3' 
+	THEN 'Ücret Bordrosu Icmali' WHEN O."Indicator" = 'D4' 
+	THEN 'serbest meslek makbuzu' WHEN O."Indicator" = 'D5' 
+	THEN 'Navlum' WHEN O."Indicator" = 'D6' 
+	THEN 'Makbuz' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = O."TransType") 
+	END as "doctypedesc",
+	 CASE WHEN O."FolioNum" IS NOT NULL 
+	THEN Cast(O."FolioNum" As nvarchar) 
+	ELSE Cast(O."TransId" AS nvarchar) 
+	END as "documentnumber",
+	 Cast(J."RefDate" As VARCHAR(10)) as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND (O."TransType" NOT IN (13,
+	 14,
+	 18,
+	 19,
+	 24,
+	 46,
+	 203,
+	 204) 
+		OR (O."TransType" IN (24,
+	 46) 
+			AND O."StornoToTr" IS NOT NULL 
+			AND LTRIM(RTRIM(O."StornoToTr"))<>'') 
+		OR (O."TransType" IN (13,
+	 14,
+	 18,
+	 19,
+	 24,
+	 46,
+	 203,
+	 204) 
+			AND (O."Indicator" IS NOT NULL 
+				AND LTRIM(RTRIM(O."Indicator"))<>'')))
+				 AND O."RefDate" BETWEEN :B1 AND :B2
+				 ) AS A WHERE IFNULL("amount",0)>0 			
+							ORDER BY  "SiralamaTarihi";
+FOR cur_row as MyCursor DO
+intsatirMaddeNo := :intsatirMaddeNo + 1;
+strfisnoYeni := cur_row."entryref";
+IF :strfisno = :strfisnoYeni THEN 
+    LineId := :LineId + 1;
+ELSE 
+    Yevmiye_Madde_Numarasi := :Yevmiye_Madde_Numarasi + 1;
+    LineId := :LineId + 1;
+    strfisno := :strfisnoYeni;
+END IF;
+IF cur_row."documentdate" = '1900-01-01' THEN 
+    INSERT INTO "@ELRAPVB" ("DocEntry", "LineId", "VisOrder", "Object", "LogInst", "U_startdate", "U_enddate",
+     "U_entryref", "U_linenumber", "U_linenumbercounter",
+      "U_accmainid", "U_accmainiddesc", "U_accsubid", "U_accsubdesc",
+    "U_amount", "U_totaldebit", "U_totalcredit", "U_debitcreditcode", "U_postingdate", "U_documenttype",
+      "U_doctypedesc", "U_documentnumber", "U_documentreference",
+     "U_documentdate", "U_paymentmethod", "U_detailcomment",
+     "U_enteredby", "U_entereddate", "U_entrynumber", "U_entrycomment")
+      VALUES (:DocEntry, :LineId, :LineId, 'ELRAP',  NULL, cur_row."startdate", cur_row."enddate",
+      cur_row."entryref",cur_row."linenumber",:Yevmiye_Madde_Numarasi,
+      cur_row."accmainid",cur_row."accmainiddesc",cur_row."accsubid",cur_row."accsubdesc",
+      cur_row."amount",cur_row."totaldebit",cur_row."totalcredit",cur_row."debitcreditcode",cur_row."postingdate",cur_row."documenttype",
+      cur_row."doctypedesc",cur_row."documentnumber",cur_row."entryref",
+      cur_row."documentdate",cur_row."paymentmethod",cur_row."detailcomment",
+      cur_row."enteredby",cur_row."entereddate",cur_row."entryref",cur_row."entrycomment"
+      );
+      Else
+      INSERT INTO "@ELRAPVB" ("DocEntry", "LineId", "VisOrder", "Object", "LogInst", "U_startdate", "U_enddate", "U_entryref"
+, "U_linenumber", "U_linenumbercounter", "U_accmainid", "U_accmainiddesc", "U_accsubid", "U_accsubdesc", "U_amount",
+"U_totaldebit", "U_totalcredit", "U_debitcreditcode", "U_postingdate", "U_documenttype", "U_doctypedesc",
+"U_documentnumber", "U_documentreference", "U_documentdate", "U_paymentmethod", "U_detailcomment", "U_enteredby",
+"U_entereddate", "U_entrynumber", "U_entrycomment") VALUES  
+(:DocEntry, :LineId, :LineId, 'ELRAP',  NULL, cur_row."startdate", cur_row."enddate",
+      cur_row."entryref",cur_row."linenumber",:Yevmiye_Madde_Numarasi,
+      cur_row."accmainid",cur_row."accmainiddesc",cur_row."accsubid",cur_row."accsubdesc",
+      cur_row."amount",cur_row."totaldebit",cur_row."totalcredit",cur_row."debitcreditcode",cur_row."postingdate",cur_row."documenttype",
+      cur_row."doctypedesc",cur_row."documentnumber",cur_row."entryref",
+      cur_row."documentdate",cur_row."paymentmethod",cur_row."detailcomment",
+      cur_row."enteredby",cur_row."entereddate",cur_row."entryref",cur_row."entrycomment");
+END IF;
+END FOR;
+Else
+Declare CURSOR MyCursor FOR
+ SELECT
+	 "startdate",
+	 "enddate",
+	 "enteredby",
+	 "entereddate",
+	 "entryref",
+	 "linenumber",
+	 "linenumbercounter",
+	 "SatirNo",
+	 "totaldebit",
+	 "totalcredit",
+	 IFNULL("documenttype",
+	 '') AS "documenttype",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN '' 
+ELSE "doctypedesc" 
+END AS "doctypedesc",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN '' 
+ELSE "documentnumber" 
+END AS "documentnumber",
+	 CASE WHEN LTRIM(RTRIM(IFNULL("documenttype",
+	 ''))) = '' 
+THEN NULL 
+ELSE CAST("documentdate" AS nvarchar(10)) 
+END AS "documentdate",
+	 "paymentmethod",
+	 "accmainid",
+	 "accmainiddesc",
+	 "accsubdesc",
+	 "accsubid",
+	 "amount",
+	 "debitcreditcode",
+	 "postingdate",
+	 "detailcomment",
+	 "entrycomment" 
+FROM ( SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 CASE WHEN (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast( O."TransId" As NVARCHAR) 
+	ELSE Cast( O."TransId" As NVARCHAR) 
+	END as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",	 
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'other' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	THEN 'check' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN 'other' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 1 
+	THEN 'voucher' 
+	ELSE '' 
+	END as "documenttype",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'dekont' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") >= 2 
+	THEN 'Çek bordrosu' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId")>1 
+	THEN 'Senet Bordrosu' 
+	ELSE '' 
+	END as "doctypedesc",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	AND J."Ref3Line" IS NOT NULL 
+	AND LTRIM(RTRIM(Cast(J."Ref3Line" As nvarchar)))<>'' 
+	THEN Cast(J."Ref3Line" As nvarchar) WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast(O."TransId" as nvarchar) WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	THEN Cast(R."BoeNum" As nvarchar) 
+	ELSE Cast(J."TransId" As nvarchar) 
+	END as "documentnumber",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 CASE WHEN R."Canceled" <> 'N' 
+	THEN '' WHEN ((R."CheckSum" IS NOT NULL 
+			AND R."CheckSum" >0) 
+		OR (R."CheckSumFC" IS NOT NULL 
+			AND R."CheckSumFC">0)) 
+	THEN 'çek' WHEN ((R."TrsfrSum" IS NOT NULL 
+			AND R."TrsfrSum" >0) 
+		OR (R."TrsfrSumFC" IS NOT NULL 
+			AND R."TrsfrSumFC">0)) 
+	THEN 'banka' WHEN ((R."CreditSum" IS NOT NULL 
+			AND R."CreditSum" >0) 
+		OR (R."CredSumFC" IS NOT NULL 
+			AND R."CredSumFC">0)) 
+	THEN 'kredi karti' WHEN ((R."CashSum" IS NOT NULL 
+			AND R."CashSum" >0) 
+		OR (R."CashSumFC" IS NOT NULL 
+			AND R."CashSumFC">0)) 
+	THEN 'nakit' WHEN ((R."BoeSum" IS NOT NULL 
+			AND R."BoeSum" >0) 
+		OR (R."BoeSumFc" IS NOT NULL 
+			AND R."BoeSumFc">0)) 
+	THEN 'Senet' 
+	ELSE '' 
+	END as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORCT R,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND R."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 24 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) 
+	AND O."StornoToTr" IS NULL AND O."TaxDate" BETWEEN :B3 AND :B4 
+ 
+
+
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 CASE WHEN (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast( O."TransId" As NVARCHAR) 
+	ELSE Cast( O."TransId" As NVARCHAR) 
+	END as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'other' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	THEN 'check' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN 'other' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 1 
+	THEN 'voucher' 
+	ELSE '' 
+	END as "documenttype",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'dekont' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") >= 2 
+	THEN 'Çek bordrosu' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId")>1 
+	THEN 'Senet Bordrosu' 
+	ELSE '' 
+	END as "doctypedesc",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") = 2 
+	AND J."Ref3Line" IS NOT NULL 
+	AND LTRIM(RTRIM(Cast(J."Ref3Line" As nvarchar)))<>'' 
+	THEN (SELECT
+	 CAST(K."Ref3Line" As nvarchar) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId" 
+		AND K."Line_ID" = 0) WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	AND (SELECT
+	 COUNT(1) 
+		FROM JDT1 as K 
+		WHERE O."TransId" = K."TransId") > 2 
+	THEN Cast(O."TransId" as nvarchar) WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	THEN Cast(V."BoeNum" As nvarchar) 
+	ELSE Cast(J."TransId" As nvarchar) 
+	END as "documentnumber",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 CASE WHEN V."Canceled" <> 'N' 
+	THEN '' WHEN ((V."CheckSum" IS NOT NULL 
+			AND V."CheckSum" >0) 
+		OR (V."CheckSumFC" IS NOT NULL 
+			AND V."CheckSumFC">0)) 
+	THEN 'çek' WHEN ((V."TrsfrSum" IS NOT NULL 
+			AND V."TrsfrSum" >0) 
+		OR (V."TrsfrSumFC" IS NOT NULL 
+			AND V."TrsfrSumFC">0)) 
+	THEN 'banka' WHEN ((V."CreditSum" IS NOT NULL 
+			AND V."CreditSum" >0) 
+		OR (V."CredSumFC" IS NOT NULL 
+			AND V."CredSumFC">0)) 
+	THEN 'kredi karti' WHEN ((V."CashSum" IS NOT NULL 
+			AND V."CashSum" >0) 
+		OR (V."CashSumFC" IS NOT NULL 
+			AND V."CashSumFC">0)) 
+	THEN 'nakit' WHEN ((V."BoeSum" IS NOT NULL 
+			AND V."BoeSum" >0) 
+		OR (V."BoeSumFc" IS NOT NULL 
+			AND V."BoeSumFc">0)) 
+	THEN 'Senet' 
+	ELSE '' 
+	END as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OVPM V,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND V."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 46 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) 
+	AND O."StornoToTr" IS NULL AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 13) 
+	END as "documenttype",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 13) 
+	END as "doctypedesc",
+	 CASE WHEN N."CANCELED"<> 'N' 
+	THEN '' WHEN N."FolioNum" IS NOT NULL 
+	AND N."FolioNum">0 
+	THEN CAST(N."FolioNum" As nvarchar) WHEN N."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(N."U_EFATNO"))<>'' 
+	THEN CAST(N."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN N."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OINV N,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND N."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 13 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 203) 
+	END as "documenttype",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 203) 
+	END as "doctypedesc",
+	 CASE WHEN P."CANCELED"<> 'N' 
+	THEN '' WHEN P."FolioNum" IS NOT NULL 
+	AND P."FolioNum">0 
+	THEN CAST(P."FolioNum" As nvarchar) WHEN P."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(P."U_EFATNO"))<>'' 
+	THEN CAST(P."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN P."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ODPI P,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND P."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 203 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."RefDate" BETWEEN :B1 AND :B2 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 14) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 14) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORIN I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 14 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."TaxDate" BETWEEN :B3 AND :B4 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 204) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 204) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ODPO I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 204 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."TaxDate" BETWEEN :B3 AND :B4 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 18) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 18) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OPCH I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 18 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."TaxDate" BETWEEN :B3 AND :B4 
+ 
+	Union SELECT
+	:StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 19) 
+	END as "documenttype",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = 19) 
+	END as "doctypedesc",
+	 CASE WHEN I."CANCELED"<> 'N' 
+	THEN '' WHEN I."FolioNum" IS NOT NULL 
+	AND I."FolioNum">0 
+	THEN CAST(I."FolioNum" As nvarchar) WHEN I."U_EFATNO" IS NOT NULL 
+	AND LTRIM(RTRIM(I."U_EFATNO"))<>'' 
+	THEN CAST(I."U_EFATNO" as nvarchar) WHEN O."TransId" IS NOT NULL 
+	THEN CAST(O."TransId" As nvarchar) 
+	ELSE '' 
+	END as "documentnumber",
+	 CASE WHEN I."CANCELED" <> 'N' 
+	THEN '' 
+	ELSE Cast(J."RefDate" As VARCHAR(10)) 
+	END as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 ORPC I,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND I."TransId" = O."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND O."TransType" = 19 
+	AND (O."Indicator" NOT IN ('D1',
+	 'D2',
+	 'D3',
+	 'D4',
+	 'D5',
+	 'D6') 
+		OR O."Indicator" IS NULL) AND O."TaxDate" BETWEEN :B3 AND :B4 
+ 
+	Union SELECT
+	 :StartDate as "startdate",
+	 :EndDate as "enddate",
+ U."USER_CODE" as "enteredby",
+	 Cast(O."RefDate" As VARCHAR(10)) as "entereddate",
+	 Cast( O."TransId" As NVARCHAR) as "entryref",
+	 NULL "linenumber",
+	 NULL "linenumbercounter",
+	 J."Line_ID" as "SatirNo",
+	 CASE WHEN (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') <0 
+	THEN (SELECT
+	 -1*SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	ELSE (SELECT
+	 SUM("Debit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'D') 
+	END as "totaldebit",
+	 CASE WHEN (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred"= 'C') <0 
+	THEN (SELECT
+	 -1*SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	ELSE (SELECT
+	 SUM("Credit") 
+		FROM JDT1 as W 
+		WHERE W."TransId" = O."TransId" 
+		AND W."DebCred" = 'C') 
+	END as "totalcredit",
+	 CASE WHEN O."Indicator" = 'D1' 
+	THEN 'other' WHEN O."Indicator" = 'D2' 
+	THEN 'other' WHEN O."Indicator" = 'D3' 
+	THEN 'other' WHEN O."Indicator" = 'D4' 
+	THEN 'other' WHEN O."Indicator" = 'D5' 
+	THEN 'shipment' WHEN O."Indicator" = 'D6' 
+	THEN 'receipt' 
+	ELSE (SELECT
+	 IFNULL("U_BelTip",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = O."TransType") 
+	END as "documenttype",
+	 CASE WHEN O."Indicator" = 'D1' 
+	THEN 'masraf formu' WHEN O."Indicator" = 'D2' 
+	THEN 'Z Raporu' WHEN O."Indicator" = 'D3' 
+	THEN 'Ücret Bordrosu Icmali' WHEN O."Indicator" = 'D4' 
+	THEN 'serbest meslek makbuzu' WHEN O."Indicator" = 'D5' 
+	THEN 'Navlum' WHEN O."Indicator" = 'D6' 
+	THEN 'Makbuz' 
+	ELSE (SELECT
+	 IFNULL("U_BelTipTanim",
+	 '') 
+		FROM "@EINTEGDOCVAL" as G 
+		WHERE G."U_SAPBelgeTuru" = O."TransType") 
+	END as "doctypedesc",
+	 CASE WHEN O."FolioNum" IS NOT NULL 
+	THEN Cast(O."FolioNum" As nvarchar) 
+	ELSE Cast(O."TransId" AS nvarchar) 
+	END as "documentnumber",
+	 Cast(J."RefDate" As VARCHAR(10)) as "documentdate",
+	 '' as "paymentmethod",
+	 SUBSTRING(J."Account",
+	 1,
+	 3) AS "accmainid",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = SUBSTRING(J."Account",
+	 1,
+	 3)) as "accmainiddesc",
+	 (SELECT
+	 T."AcctName" 
+		FROM OACT T 
+		WHERE T."AcctCode" = J."Account") as "accsubdesc",
+	 J."Account" as "accsubid",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit" <0 
+		THEN (-1*J."Credit") WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN J."Credit" WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN (-1*J."Debit") WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN J."Debit" 
+		END) as "amount",
+	 (CASE WHEN J."DebCred" = 'C' 
+		AND J."Credit"<0 
+		THEN 'D' WHEN J."DebCred" = 'C' 
+		AND J."Credit">0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit"<0 
+		THEN 'C' WHEN J."DebCred" = 'D' 
+		AND J."Debit">0 
+		THEN 'D' 
+		END) as "debitcreditcode",
+	 CAST(O."RefDate" as VARCHAR(10)) as "postingdate",
+	 J."LineMemo" as "detailcomment",
+	 IFNULL(O."Memo",
+	 '') as "entrycomment",
+	 O."RefDate" AS "SiralamaTarihi" 
+	FROM OJDT O,
+	 JDT1 J,
+	 OUSR U 
+	WHERE O."TransId" = J."TransId" 
+	AND U."USERID" = O."UserSign" 
+	AND (O."TransType" NOT IN (13,
+	 14,
+	 18,
+	 19,
+	 24,
+	 46,
+	 203,
+	 204) 
+		OR (O."TransType" IN (24,
+	 46) 
+			AND O."StornoToTr" IS NOT NULL 
+			AND LTRIM(RTRIM(O."StornoToTr"))<>'') 
+		OR (O."TransType" IN (13,
+	 14,
+	 18,
+	 19,
+	 24,
+	 46,
+	 203,
+	 204) 
+			AND (O."Indicator" IS NOT NULL 
+				AND LTRIM(RTRIM(O."Indicator"))<>''))) AND O."TaxDate" BETWEEN :B3 AND :B4) AS A WHERE IFNULL("amount",0)>0 			
+							ORDER BY  "SiralamaTarihi" ;
+ FOR cur_row as MyCursor DO
+intsatirMaddeNo := :intsatirMaddeNo + 1;
+strfisnoYeni := cur_row."entryref";
+IF :strfisno = :strfisnoYeni THEN 
+    LineId := :LineId + 1;
+ELSE 
+    Yevmiye_Madde_Numarasi := :Yevmiye_Madde_Numarasi + 1;
+    LineId := :LineId + 1;
+    strfisno := :strfisnoYeni;
+END IF;
+IF cur_row."documentdate" = '1900-01-01' THEN 
+    INSERT INTO "@ELRAPVB" ("DocEntry", "LineId", "VisOrder", "Object", "LogInst", "U_startdate", "U_enddate",
+     "U_entryref", "U_linenumber", "U_linenumbercounter",
+      "U_accmainid", "U_accmainiddesc", "U_accsubid", "U_accsubdesc",
+    "U_amount", "U_totaldebit", "U_totalcredit", "U_debitcreditcode", "U_postingdate", "U_documenttype",
+      "U_doctypedesc", "U_documentnumber", "U_documentreference",
+     "U_documentdate", "U_paymentmethod", "U_detailcomment",
+     "U_enteredby", "U_entereddate", "U_entrynumber", "U_entrycomment")
+      VALUES (:DocEntry, :LineId, :LineId, 'ELRAP',  NULL, cur_row."startdate", cur_row."enddate",
+      cur_row."entryref",cur_row."linenumber",:Yevmiye_Madde_Numarasi,
+      cur_row."accmainid",cur_row."accmainiddesc",cur_row."accsubid",cur_row."accsubdesc",
+      cur_row."amount",cur_row."totaldebit",cur_row."totalcredit",cur_row."debitcreditcode",cur_row."postingdate",cur_row."documenttype",
+      cur_row."doctypedesc",cur_row."documentnumber",cur_row."entryref",
+      cur_row."documentdate",cur_row."paymentmethod",cur_row."detailcomment",
+      cur_row."enteredby",cur_row."entereddate",cur_row."entryref",cur_row."entrycomment"
+      );
+      Else
+      INSERT INTO "@ELRAPVB" ("DocEntry", "LineId", "VisOrder", "Object", "LogInst", "U_startdate", "U_enddate", "U_entryref"
+, "U_linenumber", "U_linenumbercounter", "U_accmainid", "U_accmainiddesc", "U_accsubid", "U_accsubdesc", "U_amount",
+"U_totaldebit", "U_totalcredit", "U_debitcreditcode", "U_postingdate", "U_documenttype", "U_doctypedesc",
+"U_documentnumber", "U_documentreference", "U_documentdate", "U_paymentmethod", "U_detailcomment", "U_enteredby",
+"U_entereddate", "U_entrynumber", "U_entrycomment") VALUES  
+(:DocEntry, :LineId, :LineId, 'ELRAP',  NULL, cur_row."startdate", cur_row."enddate",
+      cur_row."entryref",cur_row."linenumber",:Yevmiye_Madde_Numarasi,
+      cur_row."accmainid",cur_row."accmainiddesc",cur_row."accsubid",cur_row."accsubdesc",
+      cur_row."amount",cur_row."totaldebit",cur_row."totalcredit",cur_row."debitcreditcode",cur_row."postingdate",cur_row."documenttype",
+      cur_row."doctypedesc",cur_row."documentnumber",cur_row."entryref",
+      cur_row."documentdate",cur_row."paymentmethod",cur_row."detailcomment",
+      cur_row."enteredby",cur_row."entereddate",cur_row."entryref",cur_row."entrycomment");
+END IF;
+END FOR;
+ 
+
+END IF ;
+
+end ;
+ 

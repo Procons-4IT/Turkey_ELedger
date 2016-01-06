@@ -1,0 +1,25 @@
+CREATE PROCEDURE sp_EDefterExcel1 (IN DocEntry int) LANGUAGE SQLSCRIPT AS 
+begin
+	SELECT CAST("U_StartDate" AS varchar(10)) AS "StartDate", CAST("U_EndDate" AS varchar(10)) AS "EndDate"  
+	     ,"U_EnteredBy" AS "EntryHeader.EnteredBy", CAST("U_EnteredDate" AS varchar(10)) AS "EntryHeader.EnteredDate" 		
+	     ,"U_EntryNumber" AS "EntryHeader.EntryNumber", "U_EntryComment" AS "EntryHeader.EntryComment" 	
+	     ,IFNULL("U_BatchID", 0) AS "EntryHeader.BatchID", "U_BatchDescription" AS "EntryHeader.BatchDescription" 	
+	     ,"U_TotalDebit" AS "EntryHeader.TotalDebit", "U_TotalCredit" AS "EntryHeader.TotalCredit" 
+	     ,"U_DocumentType" AS "EntryHeader.DocumentType"  
+	     ,IFNULL("U_DocTypeDesc", '') AS "EntryHeader.DocumentTypeDescription" 
+	     ,IFNULL("U_DocumentNumber", '') AS "EntryHeader.DocumentNumber" 
+	     ,CAST("U_DocumentDate" AS varchar(10)) AS "EntryHeader.DocumentDate" 
+	     ,IFNULL("U_PaymentMethod", '') AS "EntryHeader.PaymentMethod" 
+	     ,"U_AccountMainID" AS "EntryHeader.EntryDetail.Account.AccountMainID" 
+	     ,"U_AccMainDesc" AS "EntryHeader.EntryDetail.Account.AccountMainDescription" 
+	     ,"U_AccSubDesc" AS "EntryHeader.EntryDetail.Account.AccountSubDescription" 
+	     ,"U_AccountSubID" AS "EntryHeader.EntryDetail.Account.AccountSubID" 
+	     ,"U_Amount" AS "EntryHeader.EntryDetail.Amount" 
+	     ,"U_DebitCreditCode" AS "EntryHeader.EntryDetail.DebitCreditCode" 
+	     ,CAST("U_PostingDate" AS varchar(10)) AS "EntryHeader.EntryDetail.PostingDate" 
+	     ,"U_DetailComment" AS "EntryHeader.EntryDetail.DetailComment" 
+	     FROM "@ELRAPV" 		
+      WHERE "DocEntry" = :DocEntry
+	     AND "U_Amount">0		
+	     ORDER BY "U_DocumentDate";
+end;
